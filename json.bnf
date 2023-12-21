@@ -1,0 +1,124 @@
+    ?start: [wss] value [wss]
+
+    ?value: object
+          | array
+          | string
+          | number
+          | true
+          | false
+          | null
+
+    false : LF LA LL LS LE
+    true : LT LR LU LE
+    null : LN LU LL LL
+    
+    number : [MINUS] DIGIT+ [PERIOD DIGIT*] [(LE | UE) [PLUS | MINUS] DIGIT+ ]
+    #NUMBER : /-?\d+(\.\d+)?([eE][+-]?\d+)?/
+    
+
+
+    escape_char : BACKSLASH any_char
+    inner_string_dq : ( char_wo_escape_dq | escape_char ) +
+    inner_string_sq : ( char_wo_escape_sq | escape_char ) +
+    dq_string : (DQ inner_string_dq DQ) | (DQ DQ)
+    sq_string : (SQ inner_string_sq SQ) | (SQ SQ)
+    string : dq_string | sq_string
+
+    array  :  (LSB [wss] ( value [wss] (COMMA [wss] value [wss])*)+ RSB) | (LSB [wss] RSB)
+    object : LCB [wss] [pair [wss] (COMMA [wss] pair [wss])*] RCB
+    pair   : string [wss] COLON [wss] value
+    eol : EOL1 | EOL2
+
+
+    
+    
+    # White spaces
+    wss: (WS | TAB | eol)+ 
+    any_char : UA | LA | UB | LB | UC | LC | UD | LD | UE | LE | UF | LF | UG | LG | UH | LH | UI | LI | UJ | LJ | UK | LK | UL | LL | UM | LM | UN | LN | UO | LO | UP | LP | UQ | LQ | UR | LR | US | LS | UT | LT | UU | LU | UV | LV | UW | LW | UX | LX | UY | LY | UZ | LZ | BACKSLASH | FORWARDSLASH | WS | TAB | EOL1 |EOL2 | DQ | SQ | COMMA | DIGIT | LFP | RTP | LSB | UNDERSCORE | ASTERISK | RSB | LCB | RCB | COLON | SEMICOLON | PLUS | MINUS | PERIOD | QUESTION | PERCENT | TILDE | LFT | EQ | GT | DOLLAR | OTHER_CHAR
+    char_wo_escape_dq : UA | LA | UB | LB | UC | LC | UD | LD | UE | LE | UF | LF | UG | LG | UH | LH | UI | LI | UJ | LJ | UK | LK | UL | LL | UM | LM | UN | LN | UO | LO | UP | LP | UQ | LQ | UR | LR | US | LS | UT | LT | UU | LU | UV | LV | UW | LW | UX | LX | UY | LY | UZ | LZ | FORWARDSLASH | WS | TAB | EOL1 | EOL2 |  SQ | COMMA | DIGIT | LFP | RTP | LSB | UNDERSCORE | ASTERISK | RSB | LCB | RCB | COLON | SEMICOLON | PLUS | MINUS | PERIOD | QUESTION | PERCENT | TILDE | LFT | EQ | GT | DOLLAR | OTHER_CHAR
+    char_wo_escape_sq : UA | LA | UB | LB | UC | LC | UD | LD | UE | LE | UF | LF | UG | LG | UH | LH | UI | LI | UJ | LJ | UK | LK | UL | LL | UM | LM | UN | LN | UO | LO | UP | LP | UQ | LQ | UR | LR | US | LS | UT | LT | UU | LU | UV | LV | UW | LW | UX | LX | UY | LY | UZ | LZ | FORWARDSLASH | WS | TAB | EOL1 | EOL2 |  DQ | COMMA | DIGIT | LFP | RTP | LSB | UNDERSCORE | ASTERISK | RSB | LCB | RCB | COLON | SEMICOLON | PLUS | MINUS | PERIOD | QUESTION | PERCENT | TILDE | LFT | EQ | GT | DOLLAR | OTHER_CHAR
+
+
+    UA : "A"
+    LA : "a"
+    UB : "B"
+    LB : "b"
+    UC : "C"
+    LC : "c"
+    UD : "D"
+    LD : "d"
+    UE : "E"
+    LE : "e"
+    UF : "F"
+    LF : "f"
+    UG : "G"
+    LG : "g"
+    UH : "H"
+    LH : "h"
+    UI : "I"
+    LI : "i"
+    UJ : "J"
+    LJ : "j"
+    UK : "K"
+    LK : "k"
+    UL : "L"
+    LL : "l"
+    UM : "M"
+    LM : "m"
+    UN : "N"
+    LN : "n"
+    UO : "O"
+    LO : "o"
+    UP : "P"
+    LP : "p"
+    UQ : "Q"
+    LQ : "q"
+    UR : "R"
+    LR : "r"
+    US : "S"
+    LS : "s"
+    UT : "T"
+    LT : "t"
+    UU : "U"
+    LU : "u"
+    UV : "V"
+    LV : "v"
+    UW : "W"
+    LW : "w"
+    UX : "X"
+    LX : "x"
+    UY : "Y"
+    LY : "y"
+    UZ : "Z"
+    LZ : "z"
+    BACKSLASH : "\\"
+    FORWARDSLASH : "/"
+    WS : " "
+    TAB : /\t/
+    EOL1 : /\n/
+    EOL2 : /\r/
+    DQ : "\""
+    SQ : "'"
+    COMMA : ","
+    DIGIT : /\d/
+    LFP : "("
+    RTP : ")"
+    LSB : "["
+    UNDERSCORE : "_"
+    ASTERISK : "*"
+    RSB : "]"
+    LCB : "{"
+    RCB : "}"
+    COLON : ":"
+    SEMICOLON : ";"
+    PLUS : "+"
+    MINUS : "-"
+    PERIOD : "."
+    QUESTION : "?"
+    PERCENT : "*"
+    TILDE : "~"
+    LFT : "<"
+    EQ : "="
+    GT : ">"
+    DOLLAR : "$"
+    OTHER_CHAR : /[^a-zA-Z0-9\/\\\n\r"',()[_*\]{}:;+\-.?*~<=>$]/
