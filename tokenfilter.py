@@ -1,6 +1,7 @@
 from transformers import PreTrainedTokenizer
 from lark import Lark
 import string
+from trie import TRIE_node, TRIE
 from lark.parsers.lalr_interactive_parser import InteractiveParser
 
 
@@ -92,12 +93,12 @@ class TokenFilter:
             if ch not in self.translation_dict:
                 self.translation_dict[ch] = self._OTHER_CHAR_SYMBOL
                 
-        self.translation_dict.update({tokenizer.bos_token : "WS", 
-                         tokenizer.eos_token : "EOS", 
-                         tokenizer.cls_token : "WS", 
-                         tokenizer.pad_token : "WS", 
-                         tokenizer.unk_token : "WS",
-                         tokenizer.sep_token : "WS"})
+        self.translation_dict.update({self.tokenizer.bos_token : "WS", 
+                         self.tokenizer.eos_token : "EOS", 
+                         self.tokenizer.cls_token : "WS", 
+                         self.tokenizer.pad_token : "WS", 
+                         self.tokenizer.unk_token : "WS",
+                         self.tokenizer.sep_token : "WS"})
         
     def lex_tokenizer(self):
         for id, llm_token in self.all_token.items(): 
