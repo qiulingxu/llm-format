@@ -1,22 +1,35 @@
-class TRIE_node:
+class TrieNode:
     def __init__(self,):
-        self.map = {}
-        self.values = []
+        self._map = {}
+        self._values = []
+        self._possible_tokens = set()
+    
+    def add_transition(self, token, new_node = None):
+        """Add another token following this state."""
+        if new_node is None:
+            new_node = TrieNode()
+        self._map[token] = new_node
+        self._possible_tokens.add(token)
     
     def next_possible_tokens(self):
-        return self.map.keys()
+        return self._possible_tokens
     
     def goto(self, token):
-        if token not in self.map:
+        if token not in self._map:
             assert False, "No avialable token found in the program."
-        return self.map[token]
+        return self._map[token]
     
     def add_value(self, value):
-        self.values.append(value)
+        """Add possible token id to this state."""
+        self._values.append(value)
     
-class TRIE:
+    def get_values(self):
+        """Return all possible token ids matched for this node. Excluding matches by prefix."""
+        return self._values  
+    
+class Trie:
     def __init__(self):
-        self.start = TRIE_node()
+        self.start = TrieNode()
         
         
     def root(self):
@@ -25,7 +38,7 @@ class TRIE:
     def add(self, lst, value):
         state = self.start
         for token in lst:
-            if token not in state:
-                state[token] = TRIE_node()
-                state = state[token]
+            if token not in state.next_possible_tokens():
+                state.add_transition(token)
+            state = state.goto(token)
         state.add_value(value)

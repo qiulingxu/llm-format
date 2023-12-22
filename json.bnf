@@ -91,7 +91,7 @@
     LY : "y"
     UZ : "Z"
     LZ : "z"
-    BACKSLASH : "\\"
+    BACKSLASH : /\\/
     FORWARDSLASH : "/"
     WS : " "
     TAB : /\t/
@@ -115,7 +115,7 @@
     MINUS : "-"
     PERIOD : "."
     QUESTION : "?"
-    PERCENT : "*"
+    PERCENT : "%"
     TILDE : "~"
     LFT : "<"
     EQ : "="
