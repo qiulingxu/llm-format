@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llmformat"
+version = "0.0.1.1"
+authors = [
+  { name="Qiuling Xu", email="xennaughtyboy@gmail.com" },
+]
+description = "Format LLM language by using LALR(1) grammar. Supports JSON, XML, etc."
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ['python', 'llm', 'format', 'json', 'regex']
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/qiulingxu/llmformat"
+Issues = "https://github.com/qiulingxu/llmformat/issues"
