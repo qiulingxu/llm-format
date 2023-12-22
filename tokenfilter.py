@@ -1,8 +1,8 @@
 from transformers import PreTrainedTokenizer
-from lark import Lark
 import string
 import codecs
 from trie import TrieNode, Trie
+from lark import Lark
 from lark.parsers.lalr_interactive_parser import InteractiveParser
 from lark.lexer import Token
 
@@ -15,15 +15,22 @@ def word():
     return list(string.ascii_letters)
 
 class TokenFilter:
-    def __init__(self, tokenizer: PreTrainedTokenizer, parser, grammar_file):
-        self.parser = parser
+    def __init__(self, tokenizer: PreTrainedTokenizer, grammar_file):
         self.tokenizer = tokenizer
+        self.grammar = open(grammar_file, "r").read()
         self.all_token = {id : token for token, id in tokenizer.get_vocab().items()}
         self.possible_char = [chr(i) for i in range(256)]
         self.grammar_file = grammar_file
         self.translation_dict = {}
         self._OTHER_CHAR_SYMBOL = "OTHER_CHAR"
         self.trie = Trie()
+        self.parser = Lark(self.grammar, parser='lalr',
+            lexer='basic',
+            # Disabling propagate_positions and placeholders slightly improves speed
+            propagate_positions=False,
+            maybe_placeholders=False,
+            # Using an internal transformer is faster and more memory efficient
+            start='start')
         
     def init(self):
         self.parse_grammar_for_lexer()
@@ -145,16 +152,8 @@ if __name__ == "__main__":
     from transformers import LlamaForCausalLM, AutoTokenizer
     local_os_tokenizer_dir = "../tokenizer"
     tokenizer = tokenizer = AutoTokenizer.from_pretrained(local_os_tokenizer_dir)
-    json_grammar = open("json.bnf", "r").read()
-    json_parser = Lark(json_grammar, parser='lalr',
-                   lexer='basic',
-                   # Disabling propagate_positions and placeholders slightly improves speed
-                   propagate_positions=False,
-                   maybe_placeholders=False,
-                   # Using an internal transformer is faster and more memory efficient
-                   start='start')
     
-    token_filter = TokenFilter(tokenizer, json_parser, "json.bnf")
+    token_filter = TokenFilter(tokenizer, "json.bnf")
     token_filter.init()
     possible_token_ids = token_filter.check_context("""{"abc":"\\\\" ,"c":2.31e+""")
     for i in possible_token_ids:
