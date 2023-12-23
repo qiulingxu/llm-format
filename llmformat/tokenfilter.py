@@ -2,6 +2,7 @@ from transformers import PreTrainedTokenizer
 import string
 import codecs
 from trie import TrieNode, Trie
+from typing import List
 from lark import Lark
 from lark.parsers.lalr_interactive_parser import InteractiveParser
 from lark.lexer import Token
@@ -22,6 +23,7 @@ class TokenFilter:
         self.possible_char = [chr(i) for i in range(256)]
         self.grammar_file = grammar_file
         self.translation_dict = {}
+        self.token2symbol = {}
         self._OTHER_CHAR_SYMBOL = "OTHER_CHAR"
         self.trie = Trie()
         self.parser = Lark(self.grammar, parser='lalr',
@@ -33,13 +35,9 @@ class TokenFilter:
             start='start')
         
     def init(self):
-        self.parse_grammar_for_lexer()
-        self.lexify_tokenizer()
+        self._generate_lexer()
+        self._lexify_tokenizer()
         
-        
-    def grammar_tokenize(self):
-        pass
-    
     def _add_lex_rule(self, symbol, ch):
         if ch in self.translation_dict:
             assert False, f"Found conflicting lexer definition, where {ch} can be either {self.translation_dict[ch]} or {symbol}."
@@ -94,7 +92,7 @@ class TokenFilter:
             return self.lex(string)
             #assert False, f"Unknown character `{string[0]}` in `{string}` captured."
         
-    def parse_grammar_for_lexer(self):
+    def _generate_lexer(self):
         with open(self.grammar_file, "r") as file:
             
             for line in file.read().split("\n"):
@@ -123,27 +121,41 @@ class TokenFilter:
         if DEBUG:
             print(self.translation_dict)
         
-    def lexify_tokenizer(self):
+    def _lexify_tokenizer(self):
         for id, llm_token in self.all_token.items(): 
             token_lst = self.lex(llm_token)
+            self.token2symbol = token_lst
             self.trie.add(token_lst, id)
             
-    def check_context(self, prev_text):
+    def next_token_from_string(self, prev_text : string):
+        """This is for raw strings"""
         interactive = self.parser.parse_interactive(prev_text, start="start")
         result = interactive.exhaust_lexer()
         interactive = interactive.as_immutable()
         return self._prob(interactive, self.trie.root())
-        
+    
+    def next_token_from_tokens(self, prev_token_ids : List[int]):
+        """This is for LLM token ids"""
+        interactive = self.parser.parse_interactive("", start="start")
+        for token_id in prev_token_ids:
+            if token_id not in self.token2symbol:
+                assert False, "The token list includes unknown token {token_id}. Please check."
+            symbol_lst = self.token2symbol[token_id]
+            for symbol in symbol_lst:
+                lark_symbol = Token(symbol, "")
+                interactive.feed(lark_symbol)
+        interactive = interactive.as_immutable()
+        return self._prob(interactive, self.trie.root())        
 
     def _prob(self, parser : InteractiveParser, trie_state : TrieNode):
         accept_token = parser.accepts()
         next_possible_tokens = trie_state.next_possible_tokens()
         rst = []
         rst += trie_state.get_values()
-        for token in accept_token:
-            if token in next_possible_tokens:
-                lark_token = Token(token, " ")
-                rst = rst + self._prob(parser.feed_token(lark_token), trie_state.goto(token))
+        for symbol in accept_token:
+            if symbol in next_possible_tokens:
+                lark_symbol = Token(symbol, " ")
+                rst = rst + self._prob(parser.feed_token(lark_symbol), trie_state.goto(symbol))
         return rst
 
 
@@ -155,7 +167,7 @@ if __name__ == "__main__":
     
     token_filter = TokenFilter(tokenizer, "json.bnf")
     token_filter.init()
-    possible_token_ids = token_filter.check_context("""{"abc":"\\\\" ,"c":2.31e+""")
+    possible_token_ids = token_filter.next_token_from_string("""{"abc":"\\\\" ,"c":2.31e+""")
     for i in possible_token_ids:
         string = tokenizer.convert_ids_to_tokens([i])
         print(string, token_filter.lex(string[0]))
