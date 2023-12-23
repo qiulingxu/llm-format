@@ -44,4 +44,4 @@ def build_vllm_logits_processor(llm: Union[vllm.LLM, PreTrainedTokenizerBase], g
     return VLLMLogitsProcessor(token_enforcer)
 
 
-__all__ = ['build_vllm_logits_processor', 'build_vllm_tokenizer']
+__all__ = ['build_vllm_logits_processor']

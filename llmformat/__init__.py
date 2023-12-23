@@ -1,1 +1,1 @@
-from tokenfilter import TokenFilter
+from .tokenfilter import TokenFilter
