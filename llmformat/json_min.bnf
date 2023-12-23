@@ -1,0 +1,67 @@
+    ?start: [wss] value [wss]
+
+    ?value: object
+          | array
+          | string
+          | number
+          | true
+          | false
+          | null
+
+    false : LF LA LL LS LE
+    true : LT LR LU LE
+    null : LN LU LL LL
+    
+    number : [MINUS] DIGIT+ [PERIOD DIGIT*] [(LE | UE) [PLUS | MINUS] DIGIT+ ]
+    
+
+    escape_char : BACKSLASH any_char
+    inner_string_dq : ( char_wo_escape_dq | escape_char ) +
+    inner_string_sq : ( char_wo_escape_sq | escape_char ) +
+    dq_string : (DQ inner_string_dq DQ) | (DQ DQ)
+    sq_string : (SQ inner_string_sq SQ) | (SQ SQ)
+    string : dq_string | sq_string
+
+    array  :  (LSB [wss] ( value [wss] (COMMA [wss] value [wss])*)+ RSB) | (LSB [wss] RSB)
+    object : LCB [wss] [pair [wss] (COMMA [wss] pair [wss])*] RCB
+    pair   : string [wss] COLON [wss] value
+    eol : EOL1 | EOL2
+
+
+    
+    
+    # White spaces
+    wss: (WS | TAB | eol)+ 
+    any_char : LA|LF|LS|LL|LE|LN|LT|LR|LU|BACKSLASH|UE|FORWARDSLASH|WS|TAB|EOL1|EOL2|DQ|SQ|COMMA|DIGIT|LSB|RSB|LCB|RCB|COLON|PLUS|MINUS|PERIOD|OTHER_CHAR
+    char_wo_escape_dq :  LA|LF|LS|LL|LE|LN|LT|LR|LU|UE|FORWARDSLASH|WS|TAB|EOL1|EOL2|SQ|COMMA|DIGIT|LSB|RSB|LCB|RCB|COLON|PLUS|MINUS|PERIOD|OTHER_CHAR
+    char_wo_escape_sq : LA|LF|LS|LL|LE|LN|LT|LR|LU|UE|FORWARDSLASH|WS|TAB|EOL1|EOL2|DQ|COMMA|DIGIT|LSB|RSB|LCB|RCB|COLON|PLUS|MINUS|PERIOD|OTHER_CHAR
+
+    LA : "a"
+    LF : "f"
+    LS : "s"
+    LL : "l"
+    LE : "e"
+    LN : "n"
+    LT : "t"
+    UE : "E"
+    LR : "r"
+    LU : "u"
+    BACKSLASH : /\\/
+    FORWARDSLASH : "/"
+    WS : " "
+    TAB : /\t/
+    EOL1 : /\n/
+    EOL2 : /\r/
+    DQ : "\""
+    SQ : "'"
+    COMMA : ","
+    DIGIT : /\d/
+    LSB : "["
+    RSB : "]"
+    LCB : "{"
+    RCB : "}"
+    COLON : ":"
+    PLUS : "+"
+    MINUS : "-"
+    PERIOD : "."
+    OTHER_CHAR : /[^falsenutruE\/\\\n\r"',[_\]{}:+\-.]/

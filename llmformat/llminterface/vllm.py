@@ -7,9 +7,14 @@ try:
     from transformers import PreTrainedTokenizerBase
 except ImportError:
     raise ImportError('vllm is not installed. Please install it with "pip install vllm"')
-from llmformat.tokenfilter import TokenFilter
-from typing import List, Optional, Union
+from packaging import version
+
+if version.parse(vllm.__version__) < version.parse("0.2.6"):
+    raise ImportError('vllm version doesn\'t supports logits control. Please install it with "pip install vllm >= 0.2.6"')
 import math
+from typing import List, Optional, Union
+
+from llmformat.tokenfilter import TokenFilter
 
 
 class VLLMLogitsProcessor:

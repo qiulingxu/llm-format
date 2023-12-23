@@ -30,6 +30,7 @@ class TrieNode:
 class Trie:
     def __init__(self):
         self.start = TrieNode()
+        self.size = 0
         
         
     def root(self):
@@ -40,5 +41,6 @@ class Trie:
         for token in lst:
             if token not in state.next_possible_tokens():
                 state.add_transition(token)
+                self.size += 1
             state = state.goto(token)
         state.add_value(value)

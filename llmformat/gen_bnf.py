@@ -3,6 +3,7 @@ This file is to manually generate lexer aligned parser for LLM. Will later make 
 """
 import json
 from string import ascii_lowercase as alc
+
 symbol_file = open("symbol.bnf", "w")
 symbols = ""
 for i in alc:

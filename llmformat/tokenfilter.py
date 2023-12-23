@@ -26,6 +26,7 @@ class TokenFilter:
         self.grammar = open(grammar_file, "r").read()
         self.all_token = {id: token for token,
                           id in tokenizer.get_vocab().items()}
+        self.all_token_ids = set()
         self.possible_char = [chr(i) for i in range(256)]
         self.grammar_file = grammar_file
         self.translation_dict = {}
@@ -39,11 +40,13 @@ class TokenFilter:
                            maybe_placeholders=False,
                            # Using an internal transformer is faster and more memory efficient
                            start='start')
+        self.init()
 
     def init(self):
         self._generate_lexer()
         self._lexify_tokenizer()
-
+        print(f"In total {self.trie.size} nodes Trie created.")
+        self.all_token_ids = set(self.token2symbol.keys())
     def _add_lex_rule(self, symbol, ch):
         if ch in self.translation_dict:
             assert False, f"Found conflicting lexer definition, where {ch} can be either {self.translation_dict[ch]} or {symbol}."
@@ -121,7 +124,7 @@ class TokenFilter:
                 self.translation_dict[ch] = self._OTHER_CHAR_SYMBOL
 
         self.translation_dict.update({self.tokenizer.bos_token: "WS",
-                                      self.tokenizer.eos_token: "EOS",
+                                      self.tokenizer.eos_token: "WS",
                                       self.tokenizer.cls_token: "WS",
                                       self.tokenizer.pad_token: "WS",
                                       self.tokenizer.unk_token: "WS",
@@ -132,7 +135,7 @@ class TokenFilter:
     def _lexify_tokenizer(self):
         for id, llm_token in self.all_token.items():
             token_lst = self.lex(llm_token)
-            self.token2symbol = token_lst
+            self.token2symbol[id] = token_lst
             self.trie.add(token_lst, id)
 
     def next_token_from_string(self, prev_text: string):
@@ -146,17 +149,20 @@ class TokenFilter:
         """This is for LLM token ids"""
         interactive = self.parser.parse_interactive("", start="start")
         for token_id in prev_token_ids:
-            if token_id not in self.token2symbol:
-                assert False, "The token list includes unknown token {token_id}. Please check."
+            if token_id not in self.all_token_ids:
+                assert False, f"The token list includes unknown token {token_id}: {self.tokenizer.convert_ids_to_tokens([token_id][0])}. Please check."
             symbol_lst = self.token2symbol[token_id]
             for symbol in symbol_lst:
                 lark_symbol = Token(symbol, "")
-                interactive.feed(lark_symbol)
+                interactive.feed_token(lark_symbol)
         interactive = interactive.as_immutable()
-        return self._prob(interactive, self.trie.root())
+        result = self._prob(interactive, self.trie.root())
+        print(result)
+        return result
 
     def _prob(self, parser: InteractiveParser, trie_state: TrieNode):
         accept_token = parser.accepts()
+        print(accept_token)
         next_possible_tokens = trie_state.next_possible_tokens()
         rst = []
         rst += trie_state.get_values()
@@ -169,18 +175,3 @@ class TokenFilter:
         return rst
 
 
-if __name__ == "__main__":
-
-    from transformers import AutoTokenizer, LlamaForCausalLM
-    local_os_tokenizer_dir = "../tokenizer"
-    tokenizer = tokenizer = AutoTokenizer.from_pretrained(
-        local_os_tokenizer_dir)
-
-    token_filter = TokenFilter(tokenizer, "json.bnf")
-    token_filter.init()
-    possible_token_ids = token_filter.next_token_from_string(
-        """{"abc":"\\\\" ,"c":2.31e+""")
-    for i in possible_token_ids:
-        string = tokenizer.convert_ids_to_tokens([i])
-        print(string, token_filter.lex(string[0]))
-    # model = LlamaForCausalLM.from_pretrained()
