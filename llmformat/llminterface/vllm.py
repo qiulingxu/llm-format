@@ -25,6 +25,9 @@ class VLLMLogitsProcessor:
     def __call__(self, input_ids: List[int], scores: torch.Tensor) -> torch.Tensor:
         token_sequence = input_ids
         allowed_tokens = self.formatter.next_token_from_tokens(token_sequence)
+        #print(allowed_tokens)
+        #print(self.formatter.tokenizer.convert_ids_to_tokens(allowed_tokens))
+        print("c", end="")
         if self.mask is not None:
             self.mask.fill_(-math.inf)
         else:
@@ -45,8 +48,8 @@ def build_vllm_logits_processor(llm: Union[vllm.LLM, PreTrainedTokenizerBase], g
     can be passed in the logits_processor list that is sent to the call or generate() method of llama.cpp models."""
     llm = build_vllm_tokenizer(llm)
     
-    token_enforcer = TokenFilter(llm, grammar_file)
-    return VLLMLogitsProcessor(token_enforcer)
+    formatter = TokenFilter(llm, grammar_file)
+    return VLLMLogitsProcessor(formatter)
 
 
 __all__ = ['build_vllm_logits_processor']

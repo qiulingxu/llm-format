@@ -1,4 +1,4 @@
-    ?start: [wss] value [wss] EOS
+    ?start: [wss] intro value [wss]
 
     ?value: object
           | array
@@ -12,9 +12,9 @@
     true : LT LR LU LE
     null : LN LU LL LL
     
+    intro : word | word word | word word word | word word word word | word word word word word | word word word word word word 
+    word : any_real_char+ [wss]
     number : [MINUS] DIGIT+ [PERIOD DIGIT*] [(LE | UE) [PLUS | MINUS] DIGIT+ ]
-    
-
     escape_char : BACKSLASH any_char
     inner_string_dq : ( char_wo_escape_dq | escape_char ) +
     inner_string_sq : ( char_wo_escape_sq | escape_char ) +
@@ -29,6 +29,7 @@
     
     # White spaces
     wss: (WS | TAB | eol)+ 
+    any_real_char : LA|LF|LS|LL|LE|LN|LT|LR|LU|BACKSLASH|UE|FORWARDSLASH|OTHER_CHAR
     any_char : LA|LF|LS|LL|LE|LN|LT|LR|LU|BACKSLASH|UE|FORWARDSLASH|WS|TAB|EOL1|EOL2|DQ|SQ|COMMA|DIGIT|LSB|RSB|LCB|RCB|COLON|PLUS|MINUS|PERIOD|OTHER_CHAR
     char_wo_escape_dq :  LA|LF|LS|LL|LE|LN|LT|LR|LU|UE|FORWARDSLASH|WS|TAB|EOL1|EOL2|SQ|COMMA|DIGIT|LSB|RSB|LCB|RCB|COLON|PLUS|MINUS|PERIOD|OTHER_CHAR
     char_wo_escape_sq : LA|LF|LS|LL|LE|LN|LT|LR|LU|UE|FORWARDSLASH|WS|TAB|EOL1|EOL2|DQ|COMMA|DIGIT|LSB|RSB|LCB|RCB|COLON|PLUS|MINUS|PERIOD|OTHER_CHAR
@@ -62,4 +63,3 @@
     MINUS : "-"
     PERIOD : "."
     OTHER_CHAR : /[^falsenutruE\d\/\\\n\r"',[_\]{}:+\-.]/
-    EOS : "thissymbolwillneverbematched"

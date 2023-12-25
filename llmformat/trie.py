@@ -1,13 +1,17 @@
 class TrieNode:
-    def __init__(self,):
+    def __init__(self, identifier = None):
         self._map = {}
         self._values = []
         self._possible_tokens = set()
+        self.idetifier = identifier
     
-    def add_transition(self, token, new_node = None):
+    def repr(self):
+        return self.idetifier
+    
+    def add_transition(self, token, new_node = None, cnt = None):
         """Add another token following this state."""
         if new_node is None:
-            new_node = TrieNode()
+            new_node = TrieNode(cnt)
         self._map[token] = new_node
         self._possible_tokens.add(token)
     
@@ -29,8 +33,9 @@ class TrieNode:
     
 class Trie:
     def __init__(self):
-        self.start = TrieNode()
         self.size = 0
+        self.start = TrieNode(identifier=self.size)
+        
         
         
     def root(self):
@@ -40,7 +45,7 @@ class Trie:
         state = self.start
         for token in lst:
             if token not in state.next_possible_tokens():
-                state.add_transition(token)
                 self.size += 1
+                state.add_transition(token, cnt=self.size)
             state = state.goto(token)
         state.add_value(value)

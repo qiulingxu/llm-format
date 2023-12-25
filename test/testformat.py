@@ -8,7 +8,7 @@ tokenizer = AutoTokenizer.from_pretrained(
 
 token_filter = TokenFilter(tokenizer, "llmformat/json_min.bnf")
 possible_token_ids = token_filter.next_token_from_string(
-    """{"abc":"\\\\" ,"c""")
+    """{"abc":"\\\\" ,"c": 2.3 """)
 for i in possible_token_ids:
     string = tokenizer.convert_ids_to_tokens([i])
     print(string, token_filter.lex(string[0]))
