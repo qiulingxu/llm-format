@@ -109,15 +109,16 @@ class TokenFilter:
         assert (string is None) ^ (token_name is None), "Lexer takes either token name or a string"
         if token_name is not None and token_name in self.translation_dict:
             """We directly translate special tokens into lexer tokens"""
-            return [self.translation_dict[string]]
+            return [self.translation_dict[token_name]]
         else:
             if string is None:
                 string = self.tokenizer.convert_tokens_to_string([token_name])
             """Handle the case for string"""
             if len(string) == 0:
                 """For any unprintable token, treat them as a white space in lexer."""
-                string = " "
-            if string[0] in self.translation_dict:
+                token_name = _OTHER_CHAR_SYMBOL
+                return [token_name]
+            elif string[0] in self.translation_dict:
                 if len(string) > 1:
                     return [self.translation_dict[string[0]]] + self.lex(string[1:])
                 else:
