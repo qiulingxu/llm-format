@@ -1,7 +1,7 @@
 import codecs
 import string
 from itertools import chain
-from typing import List
+from typing import List, Optional
 
 from lark import Lark
 from lark.exceptions import UnexpectedToken
@@ -32,7 +32,7 @@ class TokenFilter:
                  memorize_state : bool = True):
         self.tokenizer = tokenizer
         self.grammar = open(grammar_file, "r").read()
-        self.all_token = {id: token for token,
+        self.all_token = {id:token for token,
                           id in tokenizer.get_vocab().items()}
         self.all_token_ids = set()
         self.possible_char = [chr(i) for i in range(256)]
@@ -104,17 +104,31 @@ class TokenFilter:
                 self._add_lex_rule(symbol, codecs.getdecoder(
                     "unicode_escape")(definition)[0])
 
-    def lex(self, string):
-        if string in self.translation_dict:
+    def lex(self, string: Optional[str] = None, token_name: Optional[str] = None) -> List[str]:
+        """Lexify a string."""
+        assert (string is None) ^ (token_name is None), "Lexer takes either token name or a string"
+        if token_name is not None and token_name in self.translation_dict:
+            """We directly translate special tokens into lexer tokens"""
             return [self.translation_dict[string]]
-        elif string[0] in self.translation_dict:
-            return [self.translation_dict[string[0]]] + self.lex(string[1:])
         else:
-            self._add_lex_rule(_OTHER_CHAR_SYMBOL, string[0])
-            return self.lex(string)
-            # assert False, f"Unknown character `{string[0]}` in `{string}` captured."
+            if string is None:
+                string = self.tokenizer.convert_tokens_to_string([token_name])
+            """Handle the case for string"""
+            if len(string) == 0:
+                """For any unprintable token, treat them as a white space in lexer."""
+                string = " "
+            if string[0] in self.translation_dict:
+                if len(string) > 1:
+                    return [self.translation_dict[string[0]]] + self.lex(string[1:])
+                else:
+                    return [self.translation_dict[string[0]]]
+            else:
+                self._add_lex_rule(_OTHER_CHAR_SYMBOL, string[0])
+                return self.lex(string)
+                # assert False, f"Unknown character `{string[0]}` in `{string}` captured."
 
     def _generate_lexer(self):
+        """Generate minimal lexer that is consistent with tokenizer."""
         with open(self.grammar_file, "r") as file:
 
             for line in file.read().split("\n"):
@@ -144,8 +158,9 @@ class TokenFilter:
             print(self.translation_dict)
 
     def _lexify_tokenizer(self):
+        """Lexify all strings in tokenizer."""
         for id, llm_token in self.all_token.items():
-            token_lst = self.lex(llm_token)
+            token_lst = self.lex(token_name=llm_token)
             self.token2symbol[id] = token_lst
             self.trie.add(token_lst, id)
 
@@ -153,9 +168,10 @@ class TokenFilter:
         """This is for raw strings"""
         interactive = self.parser.parse_interactive(prev_text, start="start")
         interactive = FastInteractiveParser.copyfrom(interactive)
-        result = interactive.exhaust_lexer()
+        interactive.exhaust_lexer()
         interactive = interactive.as_immutable()
-        return self._prob(interactive, self.trie.root())
+        print(interactive.accepts())
+        return list(self._prob(interactive, self.trie.root()))
 
     def next_token_from_tokens(self, prev_token_ids: List[int]):
         """This is for LLM token ids"""
@@ -185,13 +201,16 @@ class TokenFilter:
             return hash((tuple(parser_state.state_stack)))
         
 
-    def _prob(self, parser: InteractiveParser, trie_state: TrieNode):
+    def _prob(self, parser: InteractiveParser, trie_state: TrieNode, depth=0):
 
         next_possible_tokens = trie_state.next_possible_tokens()
         rst = trie_state.get_values()
+        
+
+        """
         parser_state_hash = self._hash_parser_state(parser.parser_state, trie_state)
         choices = {}
-        """if self.memorize_state:
+        if self.memorize_state:
             if parser_state_hash not in self.accept_symbol_memory:
                 choices = parser.accepts()
                 valid_choices = set()
@@ -211,15 +230,17 @@ class TokenFilter:
         else:"""
         for symbol in parser.choices():
             if symbol.isupper() and symbol in next_possible_tokens:
-                lark_symbol = parser.lexer_thread._Token(symbol, '')
+                lark_symbol =Token(symbol, '')
                 try:
                     next_state = parser.feed_token(lark_symbol)
+                    #print(f"s:{symbol} {depth}", end="\t")
                     part_result = \
                         self._prob(next_state,
-                            trie_state.goto(symbol))
-                    rst = chain(rst, part_result)     
+                            trie_state.goto(symbol), depth=depth+1)
+                    rst= chain(rst, part_result)      
                 except SimpleUnexpectedToken:
                     pass              
+        #print(f"v: {self.tokenizer.convert_ids_to_tokens(rst)} {depth}", end="\t")
         return rst
 
 

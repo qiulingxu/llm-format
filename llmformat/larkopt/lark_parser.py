@@ -7,6 +7,7 @@ from lark.common import ParserCallbacks
 from lark.lexer import LexerThread, Token
 from lark.parsers.lalr_analysis import ParseTableBase, Shift, StateT
 from lark.parsers.lalr_interactive_parser import InteractiveParser
+from lark.parsers.lalr_parser_state import ParseConf
 
 
 ###{We reduce value stack and simplify error signal
@@ -14,26 +15,6 @@ class SimpleUnexpectedToken(Exception):
     ...
     pass
 
-class ParseConf(Generic[StateT]):
-    __slots__ = 'parse_table', 'callbacks', 'start', 'start_state', 'end_state', 'states'
-
-    parse_table: ParseTableBase[StateT]
-    callbacks: ParserCallbacks
-    start: str
-
-    start_state: StateT
-    end_state: StateT
-    states: Dict[StateT, Dict[str, tuple]]
-
-    def __init__(self, parse_table: ParseTableBase[StateT], callbacks: ParserCallbacks, start: str):
-        self.parse_table = parse_table
-
-        self.start_state = self.parse_table.start_states[start]
-        self.end_state = self.parse_table.end_states[start]
-        self.states = self.parse_table.states
-
-        self.callbacks = callbacks
-        self.start = start
 
 class FastParserState(Generic[StateT]):
     __slots__ = 'parse_conf', 'lexer', 'state_stack', 'value_stack'
@@ -43,7 +24,7 @@ class FastParserState(Generic[StateT]):
     state_stack: List[StateT]
     value_stack: list
 
-    def __init__(self, parse_conf: ParseConf[StateT], lexer: LexerThread, state_stack=None, value_stack=None):
+    def __init__(self, parse_conf: ParseConf[StateT], lexer: LexerThread, state_stack=None):
         self.parse_conf = parse_conf
         self.lexer = lexer
         self.state_stack = state_stack or [self.parse_conf.start_state]
@@ -114,7 +95,42 @@ class FastInteractiveParser(InteractiveParser):
 
     @staticmethod
     def copyfrom(parser : InteractiveParser):
-        return FastInteractiveParser(parser.parser, parser.parser_state, parser.lexer_thread)
+        return FastInteractiveParser(parser = parser.parser,
+                                     parser_state = parser.parser_state,
+                                     lexer_thread = parser.lexer_thread)
+    
+    def as_immutable(self):
+        """Convert to an ``ImmutableInteractiveParser``."""
+        p = copy(self)
+        return FastImmutableInteractiveParser(p.parser, p.parser_state, p.lexer_thread)
+
+class FastImmutableInteractiveParser(InteractiveParser):
+    """Same as ``InteractiveParser``, but operations create a new instance instead
+    of changing it in-place.
+    """
+
+    result = None
+
+    def __hash__(self):
+        return hash((self.parser_state, self.lexer_thread))
+
+    def feed_token(self, token):
+        c = copy(self)
+        c.result = InteractiveParser.feed_token(c, token)
+        return c
+
+    def exhaust_lexer(self):
+        """Try to feed the rest of the lexer state into the parser.
+
+        Note that this returns a new ImmutableInteractiveParser and does not feed an '$END' Token"""
+        cursor = self.as_mutable()
+        cursor.exhaust_lexer()
+        return cursor.as_immutable()
+
+    def as_mutable(self):
+        """Convert to an ``InteractiveParser``."""
+        p = copy(self)
+        return FastInteractiveParser(p.parser, p.parser_state, p.lexer_thread)
 
 """
 class FastParserState(ParserState):
