@@ -1,15 +1,39 @@
-# LLM Format
+#  LLM Format
+
+![](./assets/llmlogo.jpg)
 
 ## Introduction
 
-LLM Format is a Large-language model formatter that constrain the outputs of language model to follow certain rules. 
+LLM Format is a Large-language model formatter that constrain the outputs of language model to follow certain rules. Our design is to make this tool flexible and efficient to adapt to different use cases.
 
-Different from other packages including lm-format-enforcer, jsonformer and guidance. This package ensures the generated text from LLM to be sound and complete.
+We currently supports **vllm** and any **LALR(1) grammar** including **JSON** format.
 
-Once the grammar is provided, we can gaurantee the generation of the valid grammar. We currently support the generation of all LALR(1) grammar including JSON, XML, Regular Expression and so on.
+Different from other packages including lm-format-enforcer, jsonformer and guidance. This package ensures the generated text from LLM to be sound and complete. 
 
-## TODO
 
-- Add example
+## Tutorial 
+
+### Installation
+
+`pip install llmformat`
+
+### Usage
+
+To enforce a new type of grammar, a grammar file written in EBNF is needed. We provide the JSON example as [here](https://github.com/qiulingxu/llmformat/blob/main/llmformat/grammar_files/json_min.bnf).
+
+Once it is written, we can only need one-line code change to enforce the generation.
+
+In vllm, add this option to sampling_param.
+
+sampling_param.logits_processors=[llmformat.llminterface.build_vllm_logits_processor(model, "/root/llmformat/llmformat/json_min.bnf")]
+
+### Example
+The example of working on Llama2 and vllm can be found [here](https://github.com/qiulingxu/llmformat/blob/main/examples/vllm_llama2.ipynb). Note that you may want to change the location of grammar file.
+
+
 - Add support for customized JSON
-- Add integration
+- Add more integrations
+
+## Known Issues
+
+We use cache to accelerate grammar parsing. The speed will becomes faster as it runns longer.
