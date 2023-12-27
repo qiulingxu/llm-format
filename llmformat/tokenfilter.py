@@ -12,17 +12,10 @@ from transformers import PreTrainedTokenizer
 
 from .constant import _OTHER_CHAR_SYMBOL, _SPECIAL_TOKENS
 from .larkopt.lark_parser import FastInteractiveParser, SimpleUnexpectedToken
+from .lex_helper import symbol_character_parse
 from .trie import Trie, TrieNode
 
 DEBUG = True
-
-
-def numbers():
-    return list(string.digits)
-
-
-def word():
-    return list(string.ascii_letters)
 
 
 class TokenFilter:
@@ -67,42 +60,7 @@ class TokenFilter:
 
     def add_single_character_rule(self, symbol, definition):
         """This will parse lexical rules for token in EBNF file."""
-        definition = definition.strip()
-        if definition.startswith("\""):
-            definition = definition[1:-1]
-            if definition.startswith("\\"):
-                self._add_lex_rule(symbol, codecs.getdecoder(
-                    "unicode_escape")(definition)[0])
-            else:
-                self._add_lex_rule(symbol, definition)
-        elif definition.startswith("/"):
-            definition = definition[1:-1]
-            if definition.startswith("["):
-                if definition.startswith("^"):
-                    assert False, "We currently don't support ^ syntax. The token `OTHER_CHAR` will represent all other possible characters and it is automatically generated."
-                else:
-                    definition = definition[1:-1]
-                    i = 0
-                    while (i < len(definition)):
-                        if definition[i] == "\\":
-                            self.single_character_lexer(
-                                symbol, f"/{definition[i:i+1]}/")
-                            i = i + 2
-                        else:
-                            self._add_lex_rule(symbol, definition[i])
-                            i = i + 1
-            if definition == "\\w":
-                for ch in word() + numbers() + ["_"]:
-                    self._add_lex_rule(symbol, ch)
-            elif definition == "\\d":
-                for ch in numbers():
-                    self._add_lex_rule(symbol, ch)
-            elif definition == "\\s":
-                for ch in ["\t", "\n", "\r"]:
-                    self._add_lex_rule(symbol, ch)
-            elif definition.startswith("\\"):
-                self._add_lex_rule(symbol, codecs.getdecoder(
-                    "unicode_escape")(definition)[0])
+        symbol_character_parse(symbol, definition, self._add_lex_rule)
 
     def lex(self, string: Optional[str] = None, token_name: Optional[str] = None) -> List[str]:
         """Lexify a string."""

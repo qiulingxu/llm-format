@@ -1,3 +1,4 @@
+# Optimize Lark LALR parser for better efficiency
 #See https://github.com/lark-parser/lark/issues/1142
 from copy import copy, deepcopy
 from typing import Any, Dict, Generic, List
@@ -10,7 +11,7 @@ from lark.parsers.lalr_interactive_parser import InteractiveParser
 from lark.parsers.lalr_parser_state import ParseConf
 
 
-###{We reduce value stack and simplify error signal
+#We simplify error signal
 class SimpleUnexpectedToken(Exception):
     ...
     pass

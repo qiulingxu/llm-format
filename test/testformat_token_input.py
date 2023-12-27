@@ -6,7 +6,7 @@ local_os_tokenizer_dir = "../tokenizer"
 tokenizer = AutoTokenizer.from_pretrained(
     local_os_tokenizer_dir)
 
-token_filter = TokenFilter(tokenizer, "llmformat/json_min.bnf")
+token_filter = TokenFilter(tokenizer, "llmformat/grammar_files/json_min.bnf")
 test_example = """{"abc":"\\\\" ,"c": 2.3e+2} """
 for i in range(len(test_example)):
     token_ids = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(test_example[:i]))
@@ -16,5 +16,3 @@ for i in range(len(test_example)):
     print("test_example", test_example[:i])
     string = tokenizer.convert_ids_to_tokens(possible_token_ids)
     print(string, end=" ")
-    i = input()
-# model = LlamaForCausalLM.from_pretrained()

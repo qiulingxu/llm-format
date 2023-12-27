@@ -6,7 +6,7 @@ local_os_tokenizer_dir = "../tokenizer"
 tokenizer = AutoTokenizer.from_pretrained(
     local_os_tokenizer_dir)
 
-token_filter = TokenFilter(tokenizer, "llmformat/json_min.bnf")
+token_filter = TokenFilter(tokenizer, "llmformat/grammar_files/json_min.bnf")
 print(tokenizer.convert_ids_to_tokens(token_filter.trie.root().goto("LCB").get_values()))
 test_example = """{"abc":"\\\\" ,"c": 2.3e+2} """
 for i in range(len(test_example)):
