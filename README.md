@@ -21,11 +21,15 @@ Different from other packages including lm-format-enforcer, jsonformer and guida
 
 To enforce a new type of grammar, a grammar file written in EBNF is needed. We provide the JSON example as [here](https://github.com/qiulingxu/llmformat/blob/main/llmformat/grammar_files/json_min.bnf).
 
-Once it is written, we can only need one-line code change to enforce the generation.
+Once it is written, we only need one-line code change to change the output format.
 
 In vllm, add this option to sampling_param.
 
-sampling_param.logits_processors=[llmformat.llminterface.build_vllm_logits_processor(model, "/root/llmformat/llmformat/json_min.bnf")]
+```
+model = LLM(...)
+grammar = open("./llmformat/gammar_files/json_min.bnf", "r").read()
+sampling_param.logits_processors=[llmformat.llminterface.build_vllm_logits_processor(model, grammar)]
+```
 
 ### Example
 The example of working on Llama2 and vllm can be found [here](https://github.com/qiulingxu/llmformat/blob/main/examples/vllm_llama2.ipynb). Note that you may want to change the location of grammar file.

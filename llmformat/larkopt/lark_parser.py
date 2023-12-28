@@ -9,6 +9,7 @@ from lark.lexer import LexerThread, Token
 from lark.parsers.lalr_analysis import ParseTableBase, Shift, StateT
 from lark.parsers.lalr_interactive_parser import InteractiveParser
 from lark.parsers.lalr_parser_state import ParseConf
+from typing_extensions import Self
 
 
 #We simplify error signal
@@ -50,13 +51,16 @@ class FastParserState(Generic[StateT]):
     def copy(self) -> 'ParserState[StateT]':
         return copy(self)
 
+
     def feed_token(self, token: Token, is_end=False) -> Any:
+        #assert isinstance(token, Token), f"Received {token} instead of Token"
         state_stack = self.state_stack
         states = self.parse_conf.states
         end_state = self.parse_conf.end_state
         callbacks = self.parse_conf.callbacks
-
+        
         while True:
+            
             state = state_stack[-1]
             try:
                 action, arg = states[state][token.type]
@@ -65,7 +69,8 @@ class FastParserState(Generic[StateT]):
                 raise SimpleUnexpectedToken()#token, expected, state=self, interactive_parser=None
 
             assert arg != end_state
-
+            #print(token.type, state, arg)
+            
             if action is Shift:
                 # shift once and return
                 assert not is_end
@@ -94,8 +99,27 @@ class FastInteractiveParser(InteractiveParser):
             self.parser_state.state_stack,
         )
 
+    def accepts(self):
+        """Returns the set of possible tokens that will advance the parser into a new valid state."""
+        accepts = set()
+        conf_no_callbacks = copy(self.parser_state.parse_conf)
+        # We don't want to call callbacks here since those might have arbitrary side effects
+        # and are unnecessarily slow.
+        conf_no_callbacks.callbacks = {}
+        for t in self.choices():
+            if t.isupper(): # is terminal?
+                new_cursor = copy(self)
+                new_cursor.parser_state.parse_conf = conf_no_callbacks
+                try:
+                    new_cursor.feed_token(self.lexer_thread._Token(t, ''))
+                except SimpleUnexpectedToken:
+                    pass
+                else:
+                    accepts.add(t)
+        return accepts
+
     @staticmethod
-    def copyfrom(parser : InteractiveParser):
+    def copyfrom(parser : InteractiveParser) -> Self:
         return FastInteractiveParser(parser = parser.parser,
                                      parser_state = parser.parser_state,
                                      lexer_thread = parser.lexer_thread)
@@ -105,7 +129,7 @@ class FastInteractiveParser(InteractiveParser):
         p = copy(self)
         return FastImmutableInteractiveParser(p.parser, p.parser_state, p.lexer_thread)
 
-class FastImmutableInteractiveParser(InteractiveParser):
+class FastImmutableInteractiveParser(FastInteractiveParser):
     """Same as ``InteractiveParser``, but operations create a new instance instead
     of changing it in-place.
     """
@@ -132,43 +156,3 @@ class FastImmutableInteractiveParser(InteractiveParser):
         """Convert to an ``InteractiveParser``."""
         p = copy(self)
         return FastInteractiveParser(p.parser, p.parser_state, p.lexer_thread)
-
-"""
-class FastParserState(ParserState):
-    copy_memo = {}
-    def __copy__(self):
-        new_value_stack = []
-        for value in self.value_stack:
-            key = f"{id(self)}_{id(value)}"
-            if key not in self.copy_memo:
-                self.copy_memo[key] = deepcopy(value, self.copy_memo)
-            new_value_stack.append(self.copy_memo[key])
-
-        new_instance = type(self)(
-            self.parse_conf,
-            self.lexer, # XXX copy
-            copy(self.state_stack),
-            new_value_stack,
-        )
-
-        self.copy_memo[id(self)] = new_instance
-        return new_instance
-
-
-class FastInteractiveParser(InteractiveParser):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.parser_state = FastParserState(
-            self.parser_state.parse_conf,
-            self.parser_state.lexer,
-            self.parser_state.state_stack,
-            self.parser_state.value_stack,
-        )
-
-    def __copy__(self):
-        return type(self)(
-            self.parser,
-            copy(self.parser_state),
-            copy(self.lexer_thread),
-        )
-"""        

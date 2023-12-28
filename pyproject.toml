@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llmformat"
-version = "0.0.2"
+version = "0.0.2.1"
 authors = [
   { name="Qiuling Xu", email="xennaughtyboy@gmail.com" },
 ]

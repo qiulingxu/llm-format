@@ -62,4 +62,4 @@
     MINUS : "-"
     PERIOD : "."
     OTHER_CHAR : /[^falsenutruE\d\/\\\n\r"',[_\]{}:+\-.]/
-    EOS : "thissymbolwillneverbematched"
+    EOS : "@@thissymbolwillneverbematched"

@@ -15,21 +15,18 @@ from .larkopt.lark_parser import FastInteractiveParser, SimpleUnexpectedToken
 from .lex_helper import symbol_character_parse
 from .trie import Trie, TrieNode
 
-DEBUG = True
-
 
 class TokenFilter:
     def __init__(self,
                  tokenizer: PreTrainedTokenizer, 
-                 grammar_file : str,
+                 grammar : str,
                  memorize_state : bool = True):
         self.tokenizer = tokenizer
-        self.grammar = open(grammar_file, "r").read()
+        self.grammar = grammar
         self.all_token = {id:token for token,
                           id in tokenizer.get_vocab().items()}
         self.all_token_ids = set()
         self.possible_char = [chr(i) for i in range(256)]
-        self.grammar_file = grammar_file
         self.translation_dict = {}
         self.token2symbol = {}
         self.trie = Trie()
@@ -49,7 +46,7 @@ class TokenFilter:
     def init(self):
         self._generate_lexer()
         self._lexify_tokenizer()
-        print(f"In total {self.trie.size} nodes Trie created.")
+        #print(f"In total {self.trie.size} nodes Trie created.")
         self.all_token_ids = set(self.token2symbol.keys())
     def _add_lex_rule(self, symbol, ch):
         if ch in self.translation_dict:
@@ -88,20 +85,19 @@ class TokenFilter:
 
     def _generate_lexer(self):
         """Generate minimal lexer that is consistent with tokenizer."""
-        with open(self.grammar_file, "r") as file:
 
-            for line in file.read().split("\n"):
-                line = line.strip()
-                if line.startswith("#") or line.startswith("\\") or line.startswith("//"):
-                    continue
-                pos = line.find(":")
-                if pos == -1:
-                    continue
-                symbol = line[:pos].strip()
-                definition = line[pos+1:].strip()
-                # Capitalized symbol is token in grammar
-                if symbol == symbol.upper() and symbol not in _SPECIAL_TOKENS:
-                    self.add_single_character_rule(symbol, definition)
+        for line in self.grammar.split("\n"):
+            line = line.strip()
+            if line.startswith("#") or line.startswith("\\") or line.startswith("//"):
+                continue
+            pos = line.find(":")
+            if pos == -1:
+                continue
+            symbol = line[:pos].strip()
+            definition = line[pos+1:].strip()
+            # Capitalized symbol is token in grammar
+            if symbol == symbol.upper() and symbol not in _SPECIAL_TOKENS:
+                self.add_single_character_rule(symbol, definition)
 
         for ch in self.possible_char:
             if ch not in self.translation_dict.keys():
@@ -113,8 +109,7 @@ class TokenFilter:
                                       self.tokenizer.pad_token: "WS",
                                       self.tokenizer.unk_token: "WS",
                                       self.tokenizer.sep_token: "WS"})
-        if DEBUG:
-            print(self.translation_dict)
+        #print(self.translation_dict)
 
     def _lexify_tokenizer(self):
         """Lexify all strings in tokenizer."""
@@ -129,12 +124,14 @@ class TokenFilter:
         interactive = FastInteractiveParser.copyfrom(interactive)
         interactive.exhaust_lexer()
         interactive = interactive.as_immutable()
+        print(interactive)
         print(interactive.accepts())
         return list(self._prob(interactive, self.trie.root()))
 
     def next_token_from_tokens(self, prev_token_ids: List[int]):
         """This is for LLM token ids"""
         interactive = self.parser.parse_interactive("", start="start")
+        interactive = interactive.copy()
         interactive = FastInteractiveParser.copyfrom(interactive)
         for token_id in prev_token_ids:
             #if token_id not in self.all_token_ids:
@@ -165,28 +162,6 @@ class TokenFilter:
         next_possible_tokens = trie_state.next_possible_tokens()
         rst = trie_state.get_values()
         
-
-        """
-        parser_state_hash = self._hash_parser_state(parser.parser_state, trie_state)
-        choices = {}
-        if self.memorize_state:
-            if parser_state_hash not in self.accept_symbol_memory:
-                choices = parser.accepts()
-                valid_choices = set()
-                for symbol in choices:
-                    if symbol in  next_possible_tokens:
-                        valid_choices.add(symbol)
-                self.accept_symbol_memory[parser_state_hash] = valid_choices
-                
-            choices = self.accept_symbol_memory[parser_state_hash]
-            for symbol in choices:
-                lark_symbol = parser.lexer_thread._Token(symbol, '')
-                next_state = parser.feed_token(lark_symbol)
-                part_result = \
-                    self._prob(next_state,
-                            trie_state.goto(symbol))
-                rst = chain(rst, part_result)
-        else:"""
         for symbol in parser.choices():
             if symbol.isupper() and symbol in next_possible_tokens:
                 lark_symbol =Token(symbol, '')
