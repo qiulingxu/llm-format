@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>LLM Format | llm-format</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="LLM Format" />
+<meta property="og:locale" content="en_US" />
+<meta name="google-site-verification" content="ZeQZKf4UFJEuGGKtQ3sMPaIVoKaTE2oTTBnYHhNladE" />
+<meta name="description" content="LLM Format : Teach the Large language model to follow output format like JSON, XML, etc." />
+<meta property="og:description" content="LLM Format : Teach the Large language model to follow output format like JSON, XML, etc." />
+<link rel="canonical" href="https://qiulingxu.github.io/llm-format/" />
+<meta property="og:url" content="https://qiulingxu.github.io/llm-format/" />
+<meta property="og:site_name" content="llm-format" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="LLM Format" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","description":"LLM Format : Teach the Large language model to follow output format like JSON, XML, etc.","headline":"LLM Format","name":"llm-format","url":"https://qiulingxu.github.io/llm-format/"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/llm-format/assets/css/style.css?v=73587d8e88973915e96d37aa3bff0c8da0c7c33a">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/llm-format/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://qiulingxu.github.io/llm-format/">llm-format</a></h1>
+      
+
+      <h1 id="llm-format">LLM Format</h1>
+
+<p><img src="/llm-format/assets/llmlogo.jpg" alt="" /></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>LLM Format is a Large-language model formatter that constrain the outputs of language model to follow certain rules. Our design is to make this tool flexible and efficient to adapt to different use cases.</p>
+
+<p>We currently supports <strong>vllm</strong> and any <strong>LALR(1) grammar</strong> including <strong>JSON</strong> format.</p>
+
+<p>Different from other packages including lm-format-enforcer, jsonformer and guidance. This package ensures the generated text from LLM to be sound and complete.</p>
+
+<h2 id="tutorial">Tutorial</h2>
+
+<h3 id="installation">Installation</h3>
+
+<p><code class="language-plaintext highlighter-rouge">pip install llmformat</code></p>
+
+<h3 id="usage">Usage</h3>
+
+<p>To enforce a new type of grammar, a grammar file written in EBNF is needed. We provide the JSON example as <a href="https://github.com/qiulingxu/llmformat/blob/main/llmformat/grammar_files/json_min.bnf">here</a>.</p>
+
+<p>Once it is written, we only need one-line code change to change the output format.</p>
+
+<p>In vllm, add this option to sampling_param.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>model = LLM(...)
+grammar = open("./llmformat/gammar_files/json_min.bnf", "r").read()
+sampling_param.logits_processors=[llmformat.llminterface.build_vllm_logits_processor(model, grammar)]
+</code></pre></div></div>
+
+<h3 id="example">Example</h3>
+<p>The example of working on Llama2 and vllm can be found <a href="https://github.com/qiulingxu/llmformat/blob/main/examples/vllm_llama2.ipynb">here</a>. Note that you may want to change the location of grammar file.</p>
+
+<ul>
+  <li>Add support for customized JSON</li>
+  <li>Add more integrations</li>
+</ul>
+
+<h2 id="known-issues">Known Issues</h2>
+
+<p>We use cache to accelerate grammar parsing. The speed will becomes faster as it runns longer.</p>
+
+
+      
+      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+        This site is open source. <a href="https://github.com/qiulingxu/llm-format/edit/main/README.md">Improve this page</a>.
+      </div>
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>
