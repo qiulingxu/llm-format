@@ -10,9 +10,8 @@ def parse_lex_definition(file_path):
     symbol2def = {}
     char2symbol = {}
     def add_char_symbol(symbol, char):
-        global char2symbol
-        char2symbol[symbol] = char
-
+        nonlocal char2symbol
+        char2symbol[char] = symbol
 
     for line in lex_definition.readlines():
         line = line.strip()
